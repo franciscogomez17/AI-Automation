@@ -1,0 +1,196 @@
+{
+  "name": "My workflow 3",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "responseMode": "streaming"
+        }
+      },
+      "id": "611519c9-3dce-49d2-bf9d-ce7fb26a1cd2",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        -512,
+        -128
+      ],
+      "webhookId": "2a4694a9-7ee5-441d-8773-c4f186e28242"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "Eres un Asistente Ejecutivo de Atención al Cliente y Gestión de Correos. Tu función es procesar las solicitudes entrantes, brindar información clara y enviar comunicaciones oficiales por email cuando sea necesario. No tienes autorización para modificar precios, otorgar descuentos, prometer reembolsos ni alterar datos contractuales. \n\nTu objetivo es resolver la consulta del usuario de manera eficiente y, cuando corresponda, redactar y despachar la comunicación formal mediante la herramienta de correo electrónico. \n\n Analiza la solicitud del usuario antes de ejecutar cualquier acción. - Cuando la respuesta requiera enviar un correo o notificación formal, activa de forma autónoma la herramienta conectada de Gmail. - Extrae de la conversación el correo del destinatario, el asunto adecuado y redacta un cuerpo de mensaje claro y profesional. \n\nSi el usuario solicita un reembolso, realiza un reclamo legal o muestra frustración, detén la autonomía inmediatamente y responde: \"Su caso requiere atención personalizada y ha sido derivado a un operador humano.\" - Si no cuentas con la información suficiente para resolver la consulta, detén el ciclo y deriva el caso a supervisión humana.",
+          "maxIterations": 5
+        }
+      },
+      "id": "f9279ff8-26af-47af-aafb-391aff87ba2b",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -192,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "5d66bd11-3c1e-4b51-8d5d-35332ca7b757",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -336,
+        80
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "GfJxKjbfuqA5wc3k",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('When chat message received').item.json.sessionId }}"
+      },
+      "id": "8479c006-49a5-42b6-a726-f564ddb28e45",
+      "name": "Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        -192,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('to', 'Email address of the recipient') }}",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('subject', 'Subject line of the email') }}",
+        "emailType": "text",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('body', 'Clear, professional body of the email') }}",
+        "options": {}
+      },
+      "id": "82f2bfd3-33fb-42f5-b2f0-49eca4bdaa01",
+      "name": "send_email",
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        -16,
+        96
+      ],
+      "webhookId": "add56a4e-9c38-459d-9303-6a34941ca891",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "d2RsOeahWmPF9jMC",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "fran.gomez171106@gmail.com",
+        "subject": "Hola",
+        "emailType": "text",
+        "message": "=El agente procesó la consulta con el siguiente resultado:\n\n{{ $json.output }}",
+        "options": {}
+      },
+      "id": "b94b7b96-2607-4416-a4cb-25a66845912e",
+      "name": "Send a message",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        176,
+        -128
+      ],
+      "webhookId": "3d22d2b4-787c-4e32-8cc2-496f19230014",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "d2RsOeahWmPF9jMC",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "send_email": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "d01d27c1-8c45-42bb-9c96-d3409ef82c05",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8306dd5103ebc19876e32f0ac49341f2b4be7cd7b50aa86ab5edb7bda0edb038"
+  },
+  "nodeGroups": [],
+  "id": "zzrN9OEmvVOls2vt",
+  "tags": []
+}
